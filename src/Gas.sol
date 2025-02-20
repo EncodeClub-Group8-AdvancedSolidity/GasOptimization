@@ -3,34 +3,33 @@ pragma solidity ^0.8.0;
 
 import "./Ownable.sol";
 
-contract Constants {
-    bool public tradeFlag = true;
-    bool public dividendFlag = true;
-}
+contract GasContract {
+    bool public tradeFlag = true; //slot1 1
+    bool public dividendFlag = true; //slot1 2
+    address public owner; //slot1 22
+    uint256 public totalSupply; //slot2
 
-contract GasContract is Ownable, Constants {
-    uint256 public immutable totalSupply; //slot1c 32
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
+    mapping(address => uint256) public whiteListStruct;
     address[5] public administrators;
 
-    mapping(address => uint256) public whiteListStruct;
 
     event AddedToWhitelist(address userAddress, uint256 tier);
-
     event WhiteListTransfer(address indexed);
 
     modifier onlyAdminOrOwner() {
-        require(checkForAdmin(msg.sender) || msg.sender == owner(), "Caller not admin");
+        require(msg.sender == owner, "onlyAdminOrOwner");
         _;
     }
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        balances[msg.sender] = _totalSupply;
+        owner = msg.sender;
         unchecked {
             for (uint8 ii = 0; ii < 5; ii++) {
                 administrators[ii] = _admins[ii];
             }
+            balances[msg.sender] = _totalSupply;
         }
     }
 
@@ -38,8 +37,7 @@ contract GasContract is Ownable, Constants {
         unchecked {
             for (uint256 ii = 0; ii < 5; ii++) {
                 if (administrators[ii] == _user) {
-                    admin_ = true;
-                    break;
+                    return true;    
                 }
             }
         }
@@ -49,7 +47,11 @@ contract GasContract is Ownable, Constants {
         balance_ = balances[_user];
     }
 
-    function transfer(address _recipient, uint256 _amount, string calldata _name) public returns (bool status_) {
+    function transfer(
+        address _recipient,
+        uint256 _amount,
+        string calldata _name
+    ) public returns (bool status_) {
         unchecked {
             balances[msg.sender] -= _amount;
             balances[_recipient] += _amount;
@@ -57,7 +59,10 @@ contract GasContract is Ownable, Constants {
         return true;
     }
 
-    function addToWhitelist(address _userAddrs, uint256 _tier) public onlyAdminOrOwner {
+    function addToWhitelist(
+        address _userAddrs,
+        uint256 _tier
+    ) public onlyAdminOrOwner {
         require(_tier < 255);
         if (_tier > 3) {
             whitelist[_userAddrs] = 3;
@@ -80,7 +85,9 @@ contract GasContract is Ownable, Constants {
         emit WhiteListTransfer(_recipient);
     }
 
-    function getPaymentStatus(address sender) public view returns (bool, uint256) {
+    function getPaymentStatus(
+        address sender
+    ) public view returns (bool, uint256) {
         return (true, whiteListStruct[sender]);
     }
 }
