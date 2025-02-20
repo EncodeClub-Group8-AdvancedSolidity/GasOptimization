@@ -4,22 +4,20 @@ pragma solidity ^0.8.0;
 import "./Ownable.sol";
 
 contract Constants {
-    uint256 public tradeFlag = 1;
-    uint256 public basicFlag = 0;
-    uint256 public dividendFlag = 1;
+    bool public tradeFlag = true;
+    bool public dividendFlag = true;
 }
 
 contract GasContract is Ownable, Constants {
-    uint256 public totalSupply = 0; // cannot be updated
-    uint256 public paymentCounter = 0;
+
+    uint256 public immutable totalSupply; //slot1c 32
+    uint128 public paymentCounter = 0; //slot2 16
+    uint8 public tradePercent = 12;//slot2  18
+    PaymentType constant defaultPayment = PaymentType.Unknown;
     mapping(address => uint256) public balances;
-    uint256 public tradePercent = 12;
-    address public contractOwner;
-    uint256 public tradeMode = 0;
     mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
     address[5] public administrators;
-    bool public isReady = false;
     enum PaymentType {
         Unknown,
         BasicPayment,
@@ -27,7 +25,6 @@ contract GasContract is Ownable, Constants {
         Dividend,
         GroupPayment
     }
-    PaymentType constant defaultPayment = PaymentType.Unknown;
 
     History[] public paymentHistory; // when a payment was updated
 
@@ -46,14 +43,15 @@ contract GasContract is Ownable, Constants {
         address updatedBy;
         uint256 blockNumber;
     }
+
     uint256 wasLastOdd = 1;
     mapping(address => uint256) public isOddWhitelistUser;
     
     struct ImportantStruct {
         uint256 amount;
-        uint256 valueA; // max 3 digits
+        uint8 valueA; 
+        uint8 valueB;
         uint256 bigValue;
-        uint256 valueB; // max 3 digits
         bool paymentStatus;
         address sender;
     }
@@ -69,7 +67,7 @@ contract GasContract is Ownable, Constants {
                 "Gas Contract Only Admin Check-  Caller not admin"
             );
             _;
-        } else if (senderOfTx == contractOwner) {
+        } else if (senderOfTx == owner()) {
             _;
         } else {
             revert(
@@ -96,7 +94,7 @@ contract GasContract is Ownable, Constants {
         _;
     }
 
-    event supplyChanged(address indexed, uint256 indexed);
+   
     event Transfer(address recipient, uint256 amount);
     event PaymentUpdated(
         address admin,
@@ -107,24 +105,14 @@ contract GasContract is Ownable, Constants {
     event WhiteListTransfer(address indexed);
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        contractOwner = msg.sender;
-        totalSupply = _totalSupply;
-
-        for (uint256 ii = 0; ii < administrators.length; ii++) {
-            if (_admins[ii] != address(0)) {
-                administrators[ii] = _admins[ii];
-                if (_admins[ii] == contractOwner) {
-                    balances[contractOwner] = totalSupply;
-                } else {
-                    balances[_admins[ii]] = 0;
-                }
-                if (_admins[ii] == contractOwner) {
-                    emit supplyChanged(_admins[ii], totalSupply);
-                } else if (_admins[ii] != contractOwner) {
-                    emit supplyChanged(_admins[ii], 0);
-                }
+        
+        for (uint8 ii = 0; ii < 5; ii++) {
+                administrators[ii] =  _admins[ii];
+                if (_admins[ii] == owner()) {
+                    balances[owner()] = _totalSupply;
+                } 
             }
-        }
+        
     }
 
     function getPaymentHistory()
@@ -152,7 +140,7 @@ contract GasContract is Ownable, Constants {
 
     function getTradingMode() public view returns (bool mode_) {
         bool mode = false;
-        if (tradeFlag == 1 || dividendFlag == 1) {
+        if (tradeFlag == true || dividendFlag == true) {
             mode = true;
         } else {
             mode = false;
@@ -189,23 +177,21 @@ contract GasContract is Ownable, Constants {
         return payments[_user];
     }
 
+    error InsufficientBalance();
+    error Test();
     function transfer(
         address _recipient,
         uint256 _amount,
         string calldata _name
     ) public returns (bool status_) {
-        address senderOfTx = msg.sender;
-        require(
-            balances[senderOfTx] >= _amount,
-            "Gas Contract - Transfer function - Sender has insufficient Balance"
-        );
-        require(
-            bytes(_name).length < 9,
-            "Gas Contract - Transfer function -  The recipient name is too long, there is a max length of 8 characters"
-        );
-        balances[senderOfTx] -= _amount;
+         
+        if(balances[msg.sender] < _amount ){
+            revert InsufficientBalance();}
+        if(bytes(_name).length >= 9){
+            revert Test();}
+    
+        balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        emit Transfer(_recipient, _amount);
         Payment memory payment;
         payment.admin = address(0);
         payment.adminUpdated = false;
@@ -214,7 +200,7 @@ contract GasContract is Ownable, Constants {
         payment.amount = _amount;
         payment.recipientName = _name;
         payment.paymentID = ++paymentCounter;
-        payments[senderOfTx].push(payment);
+        payments[msg.sender].push(payment);
         bool[] memory status = new bool[](tradePercent);
         for (uint256 i = 0; i < tradePercent; i++) {
             status[i] = true;
