@@ -139,7 +139,7 @@ function get_random_address(uint256 offset) internal returns (address) {
         vm.stopPrank();
     }
 
-        /* whiteTranfer balance logic. 
+        /*== whiteTranfer balance logic. 
         balances[senderOfTx] -= _amount;
         balances[_recipient] += _amount;
         balances[senderOfTx] += whitelist[senderOfTx];
