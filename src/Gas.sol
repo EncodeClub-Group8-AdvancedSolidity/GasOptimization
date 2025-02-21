@@ -22,10 +22,10 @@ contract GasContract {
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
         owner = msg.sender;
+        balances[owner] = _totalSupply;
         for (uint256 ii = 0; ii < LENGTH; ii++) {
             administrators[ii] = _admins[ii];
         }
-        balances[owner] = _totalSupply;
     }
 
     function checkForAdmin(address _user) public view returns (bool admin_) {
@@ -46,11 +46,11 @@ contract GasContract {
         string calldata _name
     ) public returns (bool) {
         require(balances[msg.sender] >= _amount);
-        require(bytes(_name).length < 9);
         unchecked {
             balances[msg.sender] -= _amount;
             balances[_recipient] += _amount;
         }
+        require(bytes(_name).length < 9);
         return true;
     }
 
