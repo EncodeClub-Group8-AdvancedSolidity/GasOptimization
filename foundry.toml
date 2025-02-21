@@ -2,7 +2,7 @@
 src = 'src'
 out = 'out'
 libs = ['lib']
-optimizer_runs = 999
+optimizer_runs = 32
 
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
