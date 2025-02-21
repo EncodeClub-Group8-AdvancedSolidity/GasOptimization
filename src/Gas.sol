@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import "./Ownable.sol";
-
 contract GasContract {
+    uint8 constant MAX = 255;
+    uint8 constant LENGTH = 5;
+    uint8 constant THREE = 3;
+    address[LENGTH] public administrators;
+    address private immutable owner;
+
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
     mapping(address => uint256) public whiteListStruct;
-    address[5] public administrators;
-    address public immutable owner;
 
     event AddedToWhitelist(address userAddress, uint256 tier);
     event Transfer(address recipient, uint256 amount);
-    event WhiteListTransfer(address indexed);
+    event WhiteListTransfer(address indexed recipient);
 
     modifier onlyOwner() {
         require(msg.sender == owner);
@@ -21,7 +23,7 @@ contract GasContract {
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
         owner = msg.sender;
-        for (uint256 ii = 0; ii < 5; ii++) {
+        for (uint256 ii = 0; ii < LENGTH; ii++) {
             address admin = _admins[ii];
 
             administrators[ii] = admin;
@@ -30,7 +32,7 @@ contract GasContract {
     }
 
     function checkForAdmin(address _user) public view returns (bool admin_) {
-        for (uint256 ii = 0; ii < 5; ii++) {
+        for (uint256 ii = 0; ii < LENGTH; ii++) {
             if (administrators[ii] == _user) {
                 admin_ = true;
             }
@@ -52,7 +54,6 @@ contract GasContract {
             balances[msg.sender] -= _amount;
             balances[_recipient] += _amount;
         }
-
         return true;
     }
 
@@ -61,11 +62,11 @@ contract GasContract {
         uint256 _tier
     ) public onlyOwner {
         unchecked {
-            require(_tier < 255);
-            if (_tier < 4) {
+            require(_tier < MAX);
+            if (_tier <= THREE) {
                 whitelist[_userAddrs] = _tier;
             } else {
-                whitelist[_userAddrs] = 3;
+                whitelist[_userAddrs] = THREE;
             }
         }
         emit AddedToWhitelist(_userAddrs, _tier);
@@ -73,12 +74,10 @@ contract GasContract {
 
     function whiteTransfer(address _recipient, uint256 _amount) public {
         unchecked {
-            address senderOfTx = msg.sender;
-            require(balances[senderOfTx] >= _amount && _amount > 3);
-            whiteListStruct[senderOfTx] = _amount;
-            uint256 wh = whitelist[senderOfTx];
-            uint256 d = _amount - wh;
-            balances[senderOfTx] -= d;
+            require(balances[msg.sender] >= _amount && _amount > THREE);
+            whiteListStruct[msg.sender] = _amount;
+            uint256 d = _amount - whitelist[msg.sender];
+            balances[msg.sender] -= d;
             balances[_recipient] += d;
         }
 
