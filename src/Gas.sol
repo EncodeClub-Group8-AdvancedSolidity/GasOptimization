@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 contract GasContract {
     uint8 constant LENGTH = 5;
     uint8 constant THREE = 3;
-    address[LENGTH] public administrators;
     address private immutable owner;
+    address[LENGTH] public administrators;
 
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
@@ -22,14 +22,14 @@ contract GasContract {
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
         owner = msg.sender;
-        balances[owner] = _totalSupply;
-        for (uint256 ii = 0; ii < LENGTH; ii++) {
+        balances[msg.sender] = _totalSupply;
+        for (uint256 ii; ii < LENGTH; ++ii) {
             administrators[ii] = _admins[ii];
         }
     }
 
     function checkForAdmin(address _user) public view returns (bool admin_) {
-        for (uint256 ii = 0; ii < LENGTH; ii++) {
+        for (uint256 ii; ii < LENGTH; ++ii) {
             if (administrators[ii] == _user) {
                 admin_ = true;
             }
@@ -46,11 +46,11 @@ contract GasContract {
         string calldata _name
     ) public returns (bool) {
         require(balances[msg.sender] >= _amount);
+        require(bytes(_name).length < 9);
         unchecked {
             balances[msg.sender] -= _amount;
             balances[_recipient] += _amount;
         }
-        require(bytes(_name).length < 9);
         return true;
     }
 
@@ -58,8 +58,8 @@ contract GasContract {
         address _userAddrs,
         uint256 _tier
     ) public onlyOwner {
+        require(_tier < type(uint8).max);
         unchecked {
-            require(_tier < type(uint8).max);
             if (_tier <= THREE) {
                 whitelist[_userAddrs] = _tier;
             } else {
@@ -72,10 +72,9 @@ contract GasContract {
     function whiteTransfer(address _recipient, uint256 _amount) public {
         unchecked {
             require(balances[msg.sender] >= _amount);
-            address sender = msg.sender;
-            whiteListStruct[sender] = _amount;
-            uint256 d = _amount - whitelist[sender];
-            balances[sender] -= d;
+            whiteListStruct[msg.sender] = _amount;
+            uint256 d = _amount - whitelist[msg.sender];
+            balances[msg.sender] -= d;
             balances[_recipient] += d;
         }
 
