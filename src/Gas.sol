@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 contract GasContract {
-    uint8 constant MAX = 255;
     uint8 constant LENGTH = 5;
     uint8 constant THREE = 3;
     address[LENGTH] public administrators;
@@ -60,7 +59,7 @@ contract GasContract {
         uint256 _tier
     ) public onlyOwner {
         unchecked {
-            require(_tier < MAX);
+            require(_tier < type(uint8).max);
             if (_tier <= THREE) {
                 whitelist[_userAddrs] = _tier;
             } else {
