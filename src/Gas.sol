@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import "./Ownable.sol";
-
 contract GasContract {
     bool public tradeFlag = true; //slot1 1
     bool public dividendFlag = true; //slot1 2
-    address public owner; //slot1 22
+    address public immutable owner; //slot1 22
+    uint8 private constant length = 5; //slot1 30
+
     uint256 public totalSupply; //slot2
 
     mapping(address => uint256) public balances;
@@ -14,19 +14,20 @@ contract GasContract {
     mapping(address => uint256) public whiteListStruct;
     address[5] public administrators;
 
-
     event AddedToWhitelist(address userAddress, uint256 tier);
     event WhiteListTransfer(address indexed);
 
+    error OnlyAdminOrOwner();
+
     modifier onlyAdminOrOwner() {
-        require(msg.sender == owner, "onlyAdminOrOwner");
+        if (msg.sender != owner) revert OnlyAdminOrOwner();
         _;
     }
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
         owner = msg.sender;
         unchecked {
-            for (uint8 ii = 0; ii < 5; ii++) {
+            for (uint8 ii = 0; ii < length; ii++) {
                 administrators[ii] = _admins[ii];
             }
             balances[msg.sender] = _totalSupply;
@@ -35,9 +36,9 @@ contract GasContract {
 
     function checkForAdmin(address _user) public view returns (bool admin_) {
         unchecked {
-            for (uint256 ii = 0; ii < 5; ii++) {
+            for (uint256 ii = 0; ii < length; ii++) {
                 if (administrators[ii] == _user) {
-                    return true;    
+                    return true;
                 }
             }
         }
@@ -81,7 +82,6 @@ contract GasContract {
             balances[_recipient] += _amount - change;
             balances[msg.sender] += change - _amount;
         }
-
         emit WhiteListTransfer(_recipient);
     }
 
