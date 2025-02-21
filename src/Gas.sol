@@ -3,23 +3,30 @@ pragma solidity ^0.8.0;
 
 import "./Ownable.sol";
 
-contract GasContract is Ownable {
+contract GasContract {
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
     mapping(address => uint256) public whiteListStruct;
     address[5] public administrators;
+    address public immutable owner;
 
     event AddedToWhitelist(address userAddress, uint256 tier);
     event Transfer(address recipient, uint256 amount);
     event WhiteListTransfer(address indexed);
 
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
     constructor(address[] memory _admins, uint256 _totalSupply) {
+        owner = msg.sender;
         for (uint256 ii = 0; ii < 5; ii++) {
             address admin = _admins[ii];
 
             administrators[ii] = admin;
         }
-        balances[msg.sender] = _totalSupply;
+        balances[owner] = _totalSupply;
     }
 
     function checkForAdmin(address _user) public view returns (bool admin_) {
