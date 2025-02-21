@@ -24,9 +24,7 @@ contract GasContract {
     constructor(address[] memory _admins, uint256 _totalSupply) {
         owner = msg.sender;
         for (uint256 ii = 0; ii < LENGTH; ii++) {
-            address admin = _admins[ii];
-
-            administrators[ii] = admin;
+            administrators[ii] = _admins[ii];
         }
         balances[owner] = _totalSupply;
     }
@@ -39,15 +37,11 @@ contract GasContract {
         }
     }
 
-    function balanceOf(address _user) public view returns (uint256 balance_) {
-        balance_ = balances[_user];
+    function balanceOf(address _user) public view returns (uint256) {
+        return balances[_user];
     }
 
-    function transfer(
-        address _recipient,
-        uint256 _amount,
-        string calldata _name
-    ) public returns (bool) {
+    function transfer(address _recipient, uint256 _amount, string calldata _name) public returns (bool) {
         require(balances[msg.sender] >= _amount);
         require(bytes(_name).length < 9);
         unchecked {
@@ -57,10 +51,7 @@ contract GasContract {
         return true;
     }
 
-    function addToWhitelist(
-        address _userAddrs,
-        uint256 _tier
-    ) public onlyOwner {
+    function addToWhitelist(address _userAddrs, uint256 _tier) public onlyOwner {
         unchecked {
             require(_tier < MAX);
             if (_tier <= THREE) {
@@ -84,10 +75,7 @@ contract GasContract {
         emit WhiteListTransfer(_recipient);
     }
 
-    function getPaymentStatus(
-        address sender
-    ) public view returns (bool b_, uint256 status_) {
-        b_ = true;
-        status_ = whiteListStruct[sender];
+    function getPaymentStatus(address _sender) public view returns (bool, uint256) {
+        return (true, whiteListStruct[_sender]);
     }
 }
