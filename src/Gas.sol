@@ -18,22 +18,20 @@ contract GasContract is Ownable {
             address admin = _admins[ii];
 
             administrators[ii] = admin;
-            if (admin == msg.sender) {
-                balances[admin] = _totalSupply;
-            }
         }
+        balances[msg.sender] = _totalSupply;
     }
 
-    function checkForAdmin(address _user) public view returns (bool _admin) {
+    function checkForAdmin(address _user) public view returns (bool admin_) {
         for (uint256 ii = 0; ii < 5; ii++) {
             if (administrators[ii] == _user) {
-                _admin = true;
+                admin_ = true;
             }
         }
     }
 
-    function balanceOf(address _user) public view returns (uint256) {
-        return balances[_user];
+    function balanceOf(address _user) public view returns (uint256 balance_) {
+        balance_ = balances[_user];
     }
 
     function transfer(
@@ -55,8 +53,8 @@ contract GasContract is Ownable {
         address _userAddrs,
         uint256 _tier
     ) public onlyOwner {
-        require(_tier < 255);
         unchecked {
+            require(_tier < 255);
             if (_tier < 4) {
                 whitelist[_userAddrs] = _tier;
             } else {
@@ -67,11 +65,10 @@ contract GasContract is Ownable {
     }
 
     function whiteTransfer(address _recipient, uint256 _amount) public {
-        address senderOfTx = msg.sender;
-        whiteListStruct[senderOfTx] = _amount;
-
-        require(balances[senderOfTx] >= _amount && _amount > 3);
         unchecked {
+            address senderOfTx = msg.sender;
+            require(balances[senderOfTx] >= _amount && _amount > 3);
+            whiteListStruct[senderOfTx] = _amount;
             uint256 wh = whitelist[senderOfTx];
             uint256 d = _amount - wh;
             balances[senderOfTx] -= d;
@@ -83,15 +80,8 @@ contract GasContract is Ownable {
 
     function getPaymentStatus(
         address sender
-    ) public view returns (bool, uint256) {
-        return (true, whiteListStruct[sender]);
-    }
-
-    receive() external payable {
-        payable(msg.sender).transfer(msg.value);
-    }
-
-    fallback() external payable {
-        payable(msg.sender).transfer(msg.value);
+    ) public view returns (bool b_, uint256 status_) {
+        b_ = true;
+        status_ = whiteListStruct[sender];
     }
 }
