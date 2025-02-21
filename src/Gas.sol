@@ -41,7 +41,11 @@ contract GasContract {
         return balances[_user];
     }
 
-    function transfer(address _recipient, uint256 _amount, string calldata _name) public returns (bool) {
+    function transfer(
+        address _recipient,
+        uint256 _amount,
+        string calldata _name
+    ) public returns (bool) {
         require(balances[msg.sender] >= _amount);
         require(bytes(_name).length < 9);
         unchecked {
@@ -51,7 +55,10 @@ contract GasContract {
         return true;
     }
 
-    function addToWhitelist(address _userAddrs, uint256 _tier) public onlyOwner {
+    function addToWhitelist(
+        address _userAddrs,
+        uint256 _tier
+    ) public onlyOwner {
         unchecked {
             require(_tier < MAX);
             if (_tier <= THREE) {
@@ -65,17 +72,20 @@ contract GasContract {
 
     function whiteTransfer(address _recipient, uint256 _amount) public {
         unchecked {
-            require(balances[msg.sender] >= _amount && _amount > THREE);
-            whiteListStruct[msg.sender] = _amount;
-            uint256 d = _amount - whitelist[msg.sender];
-            balances[msg.sender] -= d;
+            require(balances[msg.sender] >= _amount);
+            address sender = msg.sender;
+            whiteListStruct[sender] = _amount;
+            uint256 d = _amount - whitelist[sender];
+            balances[sender] -= d;
             balances[_recipient] += d;
         }
 
         emit WhiteListTransfer(_recipient);
     }
 
-    function getPaymentStatus(address _sender) public view returns (bool, uint256) {
+    function getPaymentStatus(
+        address _sender
+    ) public view returns (bool, uint256) {
         return (true, whiteListStruct[_sender]);
     }
 }
