@@ -94,12 +94,36 @@ contract GasContract {
     }
 
     function whiteTransfer(address _recipient, uint256 _amount) public {
-        unchecked {
-            require(balances[msg.sender] >= _amount);
-            whiteListStruct[msg.sender] = _amount;
-            uint256 d = _amount - whitelist[msg.sender];
-            balances[msg.sender] -= d;
-            balances[_recipient] += d;
+        assembly {
+            mstore(0, caller())
+            mstore(32, balances.slot)
+            let senderSlot := keccak256(0, 64)
+            let senderBalance := sload(senderSlot)
+            if lt(senderBalance, _amount) {
+                revert(0, 0)
+            }
+
+            mstore(0, caller())
+            mstore(32, whiteListStruct.slot)
+            let whiteListStructSlot := keccak256(0, 64)
+            sstore(whiteListStructSlot, _amount)
+
+            mstore(0, caller())
+            mstore(32, whitelist.slot)
+            let whitelistSlot := keccak256(0, 64)
+            let whitelistValue := sload(whitelistSlot)
+
+            let d := sub(_amount, whitelistValue)
+
+            let newSenderBalance := sub(senderBalance, d)
+            sstore(senderSlot, newSenderBalance)
+
+            mstore(0, _recipient)
+            mstore(32, balances.slot)
+            let recipientSlot := keccak256(0, 64)
+            let recipientBalance := sload(recipientSlot)
+            let newRecipientBalance := add(recipientBalance, d)
+            sstore(recipientSlot, newRecipientBalance)
         }
 
         emit WhiteListTransfer(_recipient);
