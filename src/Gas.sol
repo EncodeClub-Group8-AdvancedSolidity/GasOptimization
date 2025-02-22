@@ -16,7 +16,12 @@ contract GasContract {
     event WhiteListTransfer(address indexed recipient);
 
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        address _owner = owner;
+        assembly {
+            if iszero(eq(caller(), _owner)) {
+                revert(0, 0)
+            }
+        }
         _;
     }
 
