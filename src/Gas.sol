@@ -29,15 +29,23 @@ contract GasContract {
     }
 
     function checkForAdmin(address _user) public view returns (bool admin_) {
-        for (uint256 ii; ii < LENGTH; ++ii) {
-            if (administrators[ii] == _user) {
-                admin_ = true;
+        assembly {
+            let slot := administrators.slot
+            for {
+                let i := 0
+            } lt(i, 5) {
+                i := add(i, 1)
+            } {
+                let admin := sload(add(slot, i))
+                if eq(admin, _user) {
+                    admin_ := 1
+                }
             }
         }
     }
 
-    function balanceOf(address _user) public view returns (uint256) {
-        return balances[_user];
+    function balanceOf(address _user) public view returns (uint256 balance_) {
+        balance_ = balances[_user];
     }
 
     function transfer(
