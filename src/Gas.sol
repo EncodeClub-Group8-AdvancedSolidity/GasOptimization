@@ -30,13 +30,12 @@ contract GasContract {
 
     function checkForAdmin(address _user) public view returns (bool admin_) {
         assembly {
-            let slot := administrators.slot
             for {
                 let i := 0
             } lt(i, 5) {
                 i := add(i, 1)
             } {
-                let admin := sload(add(slot, i))
+                let admin := sload(add(administrators.slot, i))
                 if eq(admin, _user) {
                     admin_ := 1
                 }
@@ -45,7 +44,11 @@ contract GasContract {
     }
 
     function balanceOf(address _user) public view returns (uint256 balance_) {
-        balance_ = balances[_user];
+        assembly {
+            mstore(0, _user)
+            mstore(32, balances.slot)
+            balance_ := sload(keccak256(0, 64))
+        }
     }
 
     function transfer(
@@ -91,7 +94,12 @@ contract GasContract {
 
     function getPaymentStatus(
         address _sender
-    ) public view returns (bool, uint256) {
-        return (true, whiteListStruct[_sender]);
+    ) public view returns (bool status_, uint256 amount_) {
+        assembly {
+            status_ := 1
+            mstore(0, _sender)
+            mstore(32, whiteListStruct.slot)
+            amount_ := sload(keccak256(0, 64))
+        }
     }
 }
