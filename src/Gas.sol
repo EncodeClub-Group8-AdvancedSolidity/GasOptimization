@@ -69,14 +69,22 @@ contract GasContract {
         address _userAddrs,
         uint256 _tier
     ) public onlyOwner {
-        require(_tier < type(uint8).max);
-        unchecked {
-            if (_tier <= THREE) {
-                whitelist[_userAddrs] = _tier;
-            } else {
-                whitelist[_userAddrs] = THREE;
+        assembly {
+            if gt(_tier, 254) {
+                revert(0, 0)
             }
+
+            mstore(0, _userAddrs)
+            mstore(32, whitelist.slot)
+            let slot := keccak256(0, 64)
+
+            let value := _tier
+            if gt(_tier, 3) {
+                value := 3
+            }
+            sstore(slot, value)
         }
+
         emit AddedToWhitelist(_userAddrs, _tier);
     }
 
