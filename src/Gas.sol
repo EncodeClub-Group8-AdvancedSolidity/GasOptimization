@@ -10,7 +10,6 @@ contract GasContract {
     mapping(address => uint256) public whiteListStruct;
 
     event AddedToWhitelist(address userAddress, uint256 tier);
-    event Transfer(address recipient, uint256 amount);
     event WhiteListTransfer(address indexed recipient);
 
     modifier onlyOwner() {
@@ -31,20 +30,15 @@ contract GasContract {
             let balanceSlot := keccak256(0, 64)
             sstore(balanceSlot, _totalSupply)
 
-            let adminsLength := mload(_admins)
-            if gt(adminsLength, 5) {
-                adminsLength := 5
-            }
-            let adminSlot := administrators.slot
             let dataOffset := add(_admins, 32)
 
             for {
                 let i := 0
-            } lt(i, adminsLength) {
+            } lt(i, 5) {
                 i := add(i, 1)
             } {
                 let admin := mload(add(dataOffset, mul(i, 32)))
-                sstore(add(adminSlot, i), admin)
+                sstore(add(administrators.slot, i), admin)
             }
         }
     }
@@ -145,16 +139,16 @@ contract GasContract {
             let whitelistSlot := keccak256(0, 64)
             let whitelistValue := sload(whitelistSlot)
 
-            let d := sub(_amount, whitelistValue)
+            let val := sub(_amount, whitelistValue)
 
-            let newSenderBalance := sub(senderBalance, d)
+            let newSenderBalance := sub(senderBalance, val)
             sstore(senderSlot, newSenderBalance)
 
             mstore(0, _recipient)
             mstore(32, balances.slot)
             let recipientSlot := keccak256(0, 64)
             let recipientBalance := sload(recipientSlot)
-            let newRecipientBalance := add(recipientBalance, d)
+            let newRecipientBalance := add(recipientBalance, val)
             sstore(recipientSlot, newRecipientBalance)
         }
 
