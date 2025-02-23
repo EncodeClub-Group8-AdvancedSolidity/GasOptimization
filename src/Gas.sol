@@ -75,7 +75,7 @@ contract GasContract {
     function transfer(
         address _recipient,
         uint256 _amount,
-        string calldata _name
+        string calldata
     ) public returns (bool) {
         assembly {
             mstore(0, caller())
