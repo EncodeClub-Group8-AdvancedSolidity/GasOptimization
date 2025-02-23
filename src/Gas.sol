@@ -2,10 +2,8 @@
 pragma solidity ^0.8.0;
 
 contract GasContract {
-    uint8 constant LENGTH = 5;
-    uint8 constant THREE = 3;
     address private immutable owner;
-    address[LENGTH] public administrators;
+    address[5] public administrators;
 
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
@@ -27,9 +25,27 @@ contract GasContract {
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
         owner = msg.sender;
-        balances[msg.sender] = _totalSupply;
-        for (uint256 ii; ii < LENGTH; ++ii) {
-            administrators[ii] = _admins[ii];
+        assembly {
+            mstore(0, caller())
+            mstore(32, balances.slot)
+            let balanceSlot := keccak256(0, 64)
+            sstore(balanceSlot, _totalSupply)
+
+            let adminsLength := mload(_admins)
+            if gt(adminsLength, 5) {
+                adminsLength := 5
+            }
+            let adminSlot := administrators.slot
+            let dataOffset := add(_admins, 32)
+
+            for {
+                let i := 0
+            } lt(i, adminsLength) {
+                i := add(i, 1)
+            } {
+                let admin := mload(add(dataOffset, mul(i, 32)))
+                sstore(add(adminSlot, i), admin)
+            }
         }
     }
 
@@ -70,11 +86,6 @@ contract GasContract {
             if lt(senderBalance, _amount) {
                 revert(0, 0)
             }
-
-            // let nameLength := calldataload(_name.offset)
-            // if gt(nameLength, 9) {
-            //     revert(0, 0)
-            // }
 
             let newSenderBalance := sub(senderBalance, _amount)
             sstore(senderSlot, newSenderBalance)
