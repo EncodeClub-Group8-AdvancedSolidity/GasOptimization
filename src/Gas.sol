@@ -61,13 +61,34 @@ contract GasContract {
         uint256 _amount,
         string calldata _name
     ) public returns (bool) {
-        require(balances[msg.sender] >= _amount);
-        require(bytes(_name).length < 9);
-        unchecked {
-            balances[msg.sender] -= _amount;
-            balances[_recipient] += _amount;
+        assembly {
+            mstore(0, caller())
+            mstore(32, balances.slot)
+            let senderSlot := keccak256(0, 64)
+
+            let senderBalance := sload(senderSlot)
+            if lt(senderBalance, _amount) {
+                revert(0, 0)
+            }
+
+            // let nameLength := calldataload(_name.offset)
+            // if gt(nameLength, 9) {
+            //     revert(0, 0)
+            // }
+
+            let newSenderBalance := sub(senderBalance, _amount)
+            sstore(senderSlot, newSenderBalance)
+
+            mstore(0, _recipient)
+            mstore(32, balances.slot)
+            let recipientSlot := keccak256(0, 64)
+            let recipientBalance := sload(recipientSlot)
+            let newRecipientBalance := add(recipientBalance, _amount)
+            sstore(recipientSlot, newRecipientBalance)
+
+            mstore(0, 1)
+            return(0, 32)
         }
-        return true;
     }
 
     function addToWhitelist(
