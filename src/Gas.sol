@@ -26,18 +26,18 @@ contract GasContract {
         owner = msg.sender;
         assembly {
             mstore(0, caller())
-            mstore(32, balances.slot)
-            let balanceSlot := keccak256(0, 64)
+            mstore(0x20, balances.slot)
+            let balanceSlot := keccak256(0, 0x40)
             sstore(balanceSlot, _totalSupply)
 
-            let dataOffset := add(_admins, 32)
+            let dataOffset := add(_admins, 0x20)
 
             for {
                 let i := 0
             } lt(i, 5) {
                 i := add(i, 1)
             } {
-                let admin := mload(add(dataOffset, mul(i, 32)))
+                let admin := mload(add(dataOffset, mul(i, 0x20)))
                 sstore(add(administrators.slot, i), admin)
             }
         }
@@ -61,8 +61,8 @@ contract GasContract {
     function balanceOf(address _user) public view returns (uint256 balance_) {
         assembly {
             mstore(0, _user)
-            mstore(32, balances.slot)
-            balance_ := sload(keccak256(0, 64))
+            mstore(0x20, balances.slot)
+            balance_ := sload(keccak256(0, 0x40))
         }
     }
 
@@ -73,8 +73,8 @@ contract GasContract {
     ) public returns (bool) {
         assembly {
             mstore(0, caller())
-            mstore(32, balances.slot)
-            let senderSlot := keccak256(0, 64)
+            mstore(0x20, balances.slot)
+            let senderSlot := keccak256(0, 0x40)
 
             let senderBalance := sload(senderSlot)
             if lt(senderBalance, _amount) {
@@ -85,14 +85,14 @@ contract GasContract {
             sstore(senderSlot, newSenderBalance)
 
             mstore(0, _recipient)
-            mstore(32, balances.slot)
-            let recipientSlot := keccak256(0, 64)
+            mstore(0x20, balances.slot)
+            let recipientSlot := keccak256(0, 0x40)
             let recipientBalance := sload(recipientSlot)
             let newRecipientBalance := add(recipientBalance, _amount)
             sstore(recipientSlot, newRecipientBalance)
 
             mstore(0, 1)
-            return(0, 32)
+            return(0, 0x20)
         }
     }
 
@@ -106,8 +106,8 @@ contract GasContract {
             }
 
             mstore(0, _userAddrs)
-            mstore(32, whitelist.slot)
-            let slot := keccak256(0, 64)
+            mstore(0x20, whitelist.slot)
+            let slot := keccak256(0, 0x40)
 
             let value := _tier
             if gt(_tier, 3) {
@@ -122,21 +122,21 @@ contract GasContract {
     function whiteTransfer(address _recipient, uint256 _amount) public {
         assembly {
             mstore(0, caller())
-            mstore(32, balances.slot)
-            let senderSlot := keccak256(0, 64)
+            mstore(0x20, balances.slot)
+            let senderSlot := keccak256(0, 0x40)
             let senderBalance := sload(senderSlot)
             if lt(senderBalance, _amount) {
                 revert(0, 0)
             }
 
             mstore(0, caller())
-            mstore(32, whiteListStruct.slot)
-            let whiteListStructSlot := keccak256(0, 64)
+            mstore(0x20, whiteListStruct.slot)
+            let whiteListStructSlot := keccak256(0, 0x40)
             sstore(whiteListStructSlot, _amount)
 
             mstore(0, caller())
-            mstore(32, whitelist.slot)
-            let whitelistSlot := keccak256(0, 64)
+            mstore(0x20, whitelist.slot)
+            let whitelistSlot := keccak256(0, 0x40)
             let whitelistValue := sload(whitelistSlot)
 
             let val := sub(_amount, whitelistValue)
@@ -145,8 +145,8 @@ contract GasContract {
             sstore(senderSlot, newSenderBalance)
 
             mstore(0, _recipient)
-            mstore(32, balances.slot)
-            let recipientSlot := keccak256(0, 64)
+            mstore(0x20, balances.slot)
+            let recipientSlot := keccak256(0, 0x40)
             let recipientBalance := sload(recipientSlot)
             let newRecipientBalance := add(recipientBalance, val)
             sstore(recipientSlot, newRecipientBalance)
@@ -161,8 +161,8 @@ contract GasContract {
         assembly {
             status_ := 1
             mstore(0, _sender)
-            mstore(32, whiteListStruct.slot)
-            amount_ := sload(keccak256(0, 64))
+            mstore(0x20, whiteListStruct.slot)
+            amount_ := sload(keccak256(0, 0x40))
         }
     }
 }
