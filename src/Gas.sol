@@ -85,7 +85,6 @@ contract GasContract {
             sstore(senderSlot, newSenderBalance)
 
             mstore(0, _recipient)
-            mstore(0x20, balances.slot)
             let recipientSlot := keccak256(0, 0x40)
             let recipientBalance := sload(recipientSlot)
             let newRecipientBalance := add(recipientBalance, _amount)
@@ -114,9 +113,14 @@ contract GasContract {
                 value := 3
             }
             sstore(slot, value)
-        }
 
-        emit AddedToWhitelist(_userAddrs, _tier);
+            mstore(0x20, _tier)
+            log1(
+                0,
+                0x40,
+                0x62c1e066774519db9fe35767c15fc33df2f016675b7cc0c330ed185f286a2d52
+            )
+        }
     }
 
     function whiteTransfer(address _recipient, uint256 _amount) public {
@@ -129,12 +133,10 @@ contract GasContract {
                 revert(0, 0)
             }
 
-            mstore(0, caller())
             mstore(0x20, whiteListStruct.slot)
             let whiteListStructSlot := keccak256(0, 0x40)
             sstore(whiteListStructSlot, _amount)
 
-            mstore(0, caller())
             mstore(0x20, whitelist.slot)
             let whitelistSlot := keccak256(0, 0x40)
             let whitelistValue := sload(whitelistSlot)
