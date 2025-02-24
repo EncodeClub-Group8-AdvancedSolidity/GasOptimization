@@ -150,9 +150,14 @@ contract GasContract {
             let recipientBalance := sload(recipientSlot)
             let newRecipientBalance := add(recipientBalance, val)
             sstore(recipientSlot, newRecipientBalance)
-        }
 
-        emit WhiteListTransfer(_recipient);
+            log2(
+                0,
+                0,
+                0x98eaee7299e9cbfa56cf530fd3a0c6dfa0ccddf4f837b8f025651ad9594647b3,
+                _recipient
+            )
+        }
     }
 
     function getPaymentStatus(
